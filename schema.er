@@ -1,0 +1,158 @@
+// users(client,trainers), fitness plans, schedule consultations ,track progress and sign ins,manage subscriptions
+
+user_profile [icon : user]{
+  user_id INT PK
+  avatar_url text
+  name VARCHAR(100)
+  email VARCHAR(255) NOT NULL
+  password_hash VARCAHR(255)
+  description text
+  role ENUM(client,trainer)
+  joining_date DATE
+
+  CREATED_AT DATE
+  UPDATED_AT DATE
+}
+
+trainer{
+  trainer_id INT PK
+  practice_years INT NOT NULL CHECK(practice_years gt 5)
+  teaching_experience_years INT MOT NULL
+  speciality VARCHAR(255)
+  rating_in_stars INT(1) DEFAULT 1
+  any_titles BOOLEAN
+  titles VARCHAR(255)
+
+  author_id FK UNIQUE
+}
+
+user_profile.user_id - trainer.author_id
+
+
+client{
+  client_id INT PK
+  practice_years INT 
+  interests VARCHAR(100)
+  weight INT NOT NULL
+  height_in_cm INT NOT NULL
+  goals text
+
+  author_id FK UNIQUE
+}
+user_profile.user_id - client.author_id
+
+
+user_tokens [icon: azure-token-service]{
+  user_token_id INT PK
+  email_verification_token text
+  refresh_token text
+  forgot_password_token text
+
+  author_id FK
+}
+user_profile.user_id - user_tokens.author_id
+
+
+fitness_plans [icon: activity-square]{
+  plan_id INT PK
+  plan_name VARCHAR(50)
+  plan_desc text
+  reccomended_for ENUM(begineer,intermediate,advanced)
+  duration VARCHAR(32) NOT NULL
+  price INT NOT NULL
+  rating_in_stars INT(1) DEFAULT 1
+  no_of_purchases INT
+
+  CREATED_AT DATE
+  UPDATED_AT DATE
+}
+
+user_plans{
+  user_plan_id INT PK
+
+  plan_id FK
+  author_id FK
+  remaining_days INT NOT NULL
+  trainer_id FK
+  BOUGHT_AT DATE
+}
+
+user_plans.author_id > user_profile.user_id
+user_plans.plan_id - fitness_plans.plan_id
+user_plans.trainer_id >trainer.trainer_id
+
+
+payment [icon : payment]{
+  payment_id INT PK
+  payment_mode ENUM(UPI,CARD)
+  price_at_checkout INT
+  status ENUM(PENDING,COMPLETED,FAILED,CANCELLED)
+  transaction_id text
+
+  user_plan_id FK
+  author_id FK
+
+  CREATED_AT DATE
+}
+
+payment.author_id > user_profile.user_id
+payment.user_plan_id - user_plans.user_plan_id
+
+activity_tracker{
+  id INT PK 
+  activity_date DATE UNIQUE
+  user_plan_id FK
+
+  author_id FK
+}
+activity_tracker.author_id - user_profile.user_id
+activity_tracker.user_plan_id > user_plans.user_plan_id
+
+consultation{
+  consultation_id INT PK
+  consultation_date DATETIME
+  status ENUM(PENDING,ONGOING,COMPLETED,CANCELLED)
+  trainer_id FK
+  client_id FK
+  duration_minutes INT
+
+  notes text
+
+  CREATED_AT DATE
+}
+
+consultation.client_id <> client.client_id
+consultation.trainer_id <> trainer.trainer_id
+
+weekly_checkins{
+  checkin_id INT PK
+  weight INT NOT NULL
+  height INT NOT NULL
+  progress_img text
+  checkin_date DATE
+  notes text
+
+  client_id FK
+  user_plan_id FK
+
+  CREATED_AT DATE
+}
+
+weekly_checkins.client_id > client.client_id
+weekly_checkins.user_plan_id > user_plans.user_plan_id
+
+trainer_feedback {
+  feedback_id INT PK
+
+  trainer_id FK
+  client_id FK
+  checkin_id FK
+
+  feedback TEXT
+
+  created_at DATE
+}
+
+trainer_feedback.trainer_id > trainer.trainer_id
+trainer_feedback.client_id > client.client_id
+trainer_feedback.checkin_id - weekly_checkins.checkin_id
